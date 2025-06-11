@@ -43,30 +43,15 @@ class DropboxSettings(Document):
 
 
 @frappe.whitelist()
-def take_backup():
-	"""Enqueue longjob for taking backup to dropbox"""
-	enqueue(
-		"frappe.integrations.doctype.dropbox_settings.dropbox_settings.take_backup_to_dropbox",
-		queue="long",
-		timeout=1500,
-	)
-	frappe.msgprint(_("Queued for backup. It may take a few minutes to an hour."))
-
-
-def take_backups_daily():
-	take_backups_if("Daily")
-
-
-def take_backups_weekly():
-	take_backups_if("Weekly")
-
-
-def take_backups_if(freq):
-	if frappe.db.get_single_value("Dropbox Settings", "backup_frequency") == freq:
-		take_backup_to_dropbox()
-
-
-def take_backup_to_dropbox(retry_count=0, upload_db_backup=True):
+def take_backup(retry_count=0, upload_db_backup=True):
+	frappe.errprint(",,,")
+	# """Enqueue longjob for taking backup to dropbox"""
+	# enqueue(
+	# 	"frappe.integrations.doctype.dropbox_settings.dropbox_settings.take_backup_to_dropbox",
+	# 	queue="long",
+	# 	timeout=1500,
+	# )
+	# frappe.msgprint(_("Queued for backup. It may take a few minutes to an hour."))
 	did_not_upload, error_log = [], []
 	try:
 		if cint(frappe.db.get_single_value("Dropbox Settings", "enabled")):
@@ -98,9 +83,60 @@ def take_backup_to_dropbox(retry_count=0, upload_db_backup=True):
 			error_message = "\n".join(file_and_error) + "\n" + frappe.get_traceback()
 
 		send_email(False, "Dropbox", "Dropbox Settings", "send_notifications_to", error_message)
+	
+	
+
+
+def take_backups_daily():
+	take_backups_if("Daily")
+
+
+def take_backups_weekly():
+	take_backups_if("Weekly")
+
+
+def take_backups_if(freq):
+	if frappe.db.get_single_value("Dropbox Settings", "backup_frequency") == freq:
+		take_backup_to_dropbox()
+
+
+def take_backup_to_dropbox(retry_count=0, upload_db_backup=True):
+	frappe.errprint("ssss")
+	did_not_upload, error_log = [], []
+	try:
+		if cint(frappe.db.get_single_value("Dropbox Settings", "enabled")):
+			# validate_file_size()
+
+			did_not_upload, error_log = backup_to_dropbox(upload_db_backup)
+			if did_not_upload:
+				raise Exception
+
+			if cint(frappe.db.get_single_value("Dropbox Settings", "send_email_for_successful_backup")):
+				send_email(True, "Dropbox", "Dropbox Settings", "send_notifications_to")
+	except JobTimeoutException:
+		if retry_count < 2:
+			args = {
+				"retry_count": retry_count + 1,
+				"upload_db_backup": False,  # considering till worker timeout db backup is uploaded
+			}
+			enqueue(
+				"frappe.integrations.doctype.dropbox_settings.dropbox_settings.take_backup_to_dropbox",
+				queue="long",
+				timeout=1500,
+				**args,
+			)
+	except Exception:
+		if isinstance(error_log, str):
+			error_message = error_log + "\n" + frappe.get_traceback()
+		else:
+			file_and_error = [" - ".join(f) for f in zip(did_not_upload, error_log)]
+			error_message = "\n".join(file_and_error) + "\n" + frappe.get_traceback()
+
+		send_email(False, "Dropbox", "Dropbox Settings", "send_notifications_to", error_message)
 
 
 def backup_to_dropbox(upload_db_backup=True):
+	frappe.errprint("dfdf")
 	if not frappe.db:
 		frappe.connect()
 
@@ -393,7 +429,7 @@ def dropbox_auth_finish(return_access_token=False):
 
 
 def set_dropbox_access_token(access_token):
-	frappe.db.set_single_value("Dropbox Settings", "dropbox_access_token", access_token)
+	frappe.db.set_value("Dropbox Settings", None, "dropbox_access_token", access_token)
 	frappe.db.commit()
 
 

@@ -96,10 +96,11 @@ def getdate(
 	try:
 		return parser.parse(string_date, dayfirst=parse_day_first).date()
 	except ParserError:
-		frappe.throw(
-			frappe._("{} is not a valid date string.").format(frappe.bold(string_date)),
-			title=frappe._("Invalid Date"),
-		)
+		pass
+		# frappe.throw(
+		# 	frappe._("{} is not a valid date string.").format(frappe.bold(string_date)),
+		# 	title=frappe._("Invalid Date"),
+		# )
 
 
 def get_datetime(
@@ -1635,7 +1636,10 @@ def get_absolute_url(doctype: str, name: str) -> str:
 
 
 def get_url_to_form(doctype: str, name: str) -> str:
-	return get_url(uri=f"/app/{quoted(slug(doctype))}/{quoted(name)}")
+# ***********************************  ADDED 2023-05-22 ****************************************
+	return get_url(uri=f"/app/{quoted(slug(doctype))}/{quoted_doc(name)}")
+# ***********************************  ADDED 2023-05-22 ****************************************
+#	return get_url(uri=f"/app/{quoted(slug(doctype))}/{quoted(name)}")
 
 
 def get_url_to_list(doctype: str) -> str:
@@ -1884,6 +1888,10 @@ def expand_relative_urls(html: str) -> str:
 def quoted(url: str) -> str:
 	return cstr(quote(encode(cstr(url)), safe=b"~@#$&()*!+=:;,.?/'"))
 
+#*******************************  ADDED 2023-05-22 *******************************************************
+def quoted_doc(url: str) -> str:
+	return cstr(quote(encode(cstr(url)), safe=b"~@#$&()*!+=:;,.?'"))
+#*******************************  ADDED 2023-05-22 *******************************************************
 
 def quote_urls(html: str) -> str:
 	def _quote_url(match):

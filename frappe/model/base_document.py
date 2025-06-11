@@ -957,6 +957,7 @@ class BaseDocument:
 			db_value = db_values.get(key)
 
 			if df and not df.allow_on_submit and (self.get(key) or db_value):
+				
 				if df.fieldtype in table_fields:
 					# just check if the table size has changed
 					# individual fields will be checked in the loop for children
@@ -973,7 +974,12 @@ class BaseDocument:
 						seconds=db_value.second,
 						microseconds=db_value.microsecond,
 					)
-				if self_value != db_value:
+				##********* husam added round function 2023-10-24 for NUMERIC values
+				#if self_value.is_numeric() and db_value.is_numeric():
+				#	self_value=round(flt(self_value),6)
+				#	db_value=round(flt(db_value),6)
+				##********* husam added round function 2023-10-24
+				if self_value != db_value: 
 					frappe.throw(
 						_("{0} Not allowed to change {1} after submission from {2} to {3}").format(
 							f"Row #{self.idx}:" if self.get("parent") else "",
