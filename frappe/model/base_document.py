@@ -11,6 +11,7 @@ from frappe.model import (
 	default_fields,
 	display_fieldtypes,
 	float_like_fields,
+	get_permitted_fields,
 	table_fields,
 )
 from frappe.model.docstatus import DocStatus
@@ -297,19 +298,24 @@ class BaseDocument:
 		self, sanitize=True, convert_dates_to_str=False, ignore_nulls=False, ignore_virtual=False
 	) -> dict:
 		d = _dict()
+		permitted_fields = get_permitted_fields(doctype=self.doctype)
+
 		for fieldname in self.meta.get_valid_columns():
+			field_value = getattr(self, fieldname, None)
+
 			# column is valid, we can use getattr
-			d[fieldname] = getattr(self, fieldname, None)
+			d[fieldname] = field_value
 
 			# if no need for sanitization and value is None, continue
 			if not sanitize and d[fieldname] is None:
 				continue
 
 			df = self.meta.get_field(fieldname)
+			is_virtual_field = getattr(df, "is_virtual", False)
 
 			if df:
-				if getattr(df, "is_virtual", False):
-					if ignore_virtual:
+				if is_virtual_field:
+					if ignore_virtual or fieldname not in permitted_fields:
 						del d[fieldname]
 						continue
 
@@ -347,7 +353,7 @@ class BaseDocument:
 			):
 				d[fieldname] = str(d[fieldname])
 
-			if ignore_nulls and d[fieldname] is None:
+			if ignore_nulls and not is_virtual_field and d[fieldname] is None:
 				del d[fieldname]
 
 		return d
@@ -750,7 +756,7 @@ class BaseDocument:
 					values.name = doctype
 
 				if frappe.get_meta(doctype).get("is_virtual"):
-					values = frappe.get_doc(doctype, docname)
+					values = frappe.get_doc(doctype, docname).as_dict()
 
 				if values:
 					setattr(self, df.fieldname, values.name)
@@ -957,7 +963,6 @@ class BaseDocument:
 			db_value = db_values.get(key)
 
 			if df and not df.allow_on_submit and (self.get(key) or db_value):
-				
 				if df.fieldtype in table_fields:
 					# just check if the table size has changed
 					# individual fields will be checked in the loop for children
@@ -974,12 +979,7 @@ class BaseDocument:
 						seconds=db_value.second,
 						microseconds=db_value.microsecond,
 					)
-				##********* husam added round function 2023-10-24 for NUMERIC values
-				#if self_value.is_numeric() and db_value.is_numeric():
-				#	self_value=round(flt(self_value),6)
-				#	db_value=round(flt(db_value),6)
-				##********* husam added round function 2023-10-24
-				if self_value != db_value: 
+				if self_value != db_value:
 					frappe.throw(
 						_("{0} Not allowed to change {1} after submission from {2} to {3}").format(
 							f"Row #{self.idx}:" if self.get("parent") else "",

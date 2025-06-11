@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "OPTY.YY./.MM./.###",
+ "autoname": "DL.####",
  "creation": "2013-01-29 17:55:08",
  "doctype": "DocType",
  "document_type": "Document",
@@ -367,7 +367,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2023-05-21 19:22:01.347385",
+ "modified": "2022-08-30 11:45:16.772277",
  "modified_by": "Administrator",
  "module": "Custom",
  "name": "Customize Form",

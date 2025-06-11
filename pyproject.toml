@@ -77,7 +77,7 @@ dependencies = [
 
     # integration dependencies
     "boto3~=1.18.49",
-    "dropbox~=11.36.2",
+    "dropbox~=11.7.0",
     "google-api-python-client~=2.2.0",
     "google-auth-httplib2~=0.1.0",
     "google-auth-oauthlib~=0.4.4",
@@ -107,3 +107,4 @@ Faker = "~=13.12.1"
 pyngrok = "~=5.0.5"
 unittest-xml-reporting = "~=3.0.4"
 watchdog = "~=2.1.9"
+hypothesis = "~=6.68.2"
