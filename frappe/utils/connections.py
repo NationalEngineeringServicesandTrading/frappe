@@ -26,16 +26,21 @@ def check_database():
 	db_port = config.get("db_port", 3306 if db_type == "mariadb" else 5432)
 	return {db_type: is_open(db_host, db_port)}
 
-
+# changed becuse there is some error in redis in frappe cloud reverse it back if not needed
 def check_redis(redis_services=None):
-	config = get_conf()
-	services = redis_services or REDIS_KEYS
-	status = {}
-	for conn in services:
-		redis_url = urlparse(config.get(conn)).netloc
-		redis_host, redis_port = redis_url.split(":")
-		status[conn] = is_open(redis_host, redis_port)
-	return status
+    config = get_conf()
+    services = redis_services or REDIS_KEYS
+    status = {}
+
+    for conn in services:
+        parsed = urlparse(config.get(conn))
+        redis_host = parsed.hostname
+        redis_port = parsed.port
+
+        status[conn] = is_open(redis_host, redis_port)
+
+    return status
+
 
 
 def check_connection(redis_services=None):
