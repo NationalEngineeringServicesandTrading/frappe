@@ -17,6 +17,7 @@ from frappe.desk.notifications import clear_notifications
 from frappe.model.document import Document
 from frappe.query_builder import DocType
 from frappe.rate_limiter import rate_limit
+from frappe.sessions import clear_sessions
 from frappe.utils import (
 	cint,
 	escape_html,
@@ -35,6 +36,7 @@ from frappe.utils.password import check_password, get_password_reset_limit
 from frappe.utils.password import update_password as _update_password
 from frappe.utils.user import get_system_managers
 from frappe.website.utils import is_signup_disabled
+from frappe.www.login import sanitize_redirect
 
 desk_properties = (
 	"search_bar",
@@ -476,6 +478,10 @@ class User(Document):
 
 		# set email
 		frappe.db.update("User", new_name, "email", new_name)
+		frappe.cache().delete_key("users_for_mentions")
+
+		clear_sessions(user=old_name, force=True)
+		clear_sessions(user=new_name, force=True)
 
 	def append_roles(self, *roles):
 		"""Add roles to user"""
@@ -888,7 +894,7 @@ def sign_up(email, full_name, redirect_to):
 			user.add_roles(default_role)
 
 		if redirect_to:
-			frappe.cache().hset("redirect_after_login", user.name, redirect_to)
+			frappe.cache().hset("redirect_after_login", user.name, sanitize_redirect(redirect_to))
 
 		if user.flags.email_sent:
 			return 1, _("Please check your email for verification")

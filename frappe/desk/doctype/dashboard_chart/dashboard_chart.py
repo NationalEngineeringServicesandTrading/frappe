@@ -56,7 +56,7 @@ def get_permission_query_conditions(user):
 			or `tabDashboard Chart`.`module` is NULL""".format(allowed_modules=",".join(allowed_modules))
 
 	return f"""
-		((`tabDashboard Chart`.`chart_type` in ('Count', 'Sum', 'Average')
+		((`tabDashboard Chart`.`chart_type` in ('Count', 'Sum', 'Average', 'Group By')
 		and {doctype_condition})
 		or
 		(`tabDashboard Chart`.`chart_type` = 'Report'
@@ -275,7 +275,7 @@ def get_group_by_chart_config(chart, filters):
 		],
 		filters=filters,
 		parent_doctype=chart.parent_document_type,
-		group_by=group_by_field,
+		group_by=group_by_field if "." in group_by_field else f"`tab{doctype}`.`{group_by_field}`",
 		order_by="count desc",
 		ignore_ifnull=True,
 	)
